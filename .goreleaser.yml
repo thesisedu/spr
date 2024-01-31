@@ -1,8 +1,8 @@
 env:
   - GO111MODULE=on
-before:
-  hooks:
-    - go mod tidy
+# before:
+#   hooks:
+#     - go mod tidy
 builds:
   - main: ./cmd/spr
     id: spr
@@ -46,19 +46,19 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
-  - 
-    name: spr
-    repository:
-      owner: ejoffe
-      name: homebrew-tap
-    homepage: https://github.com/ejoffe/spr
-    description: Stacked Pull Requests on GitHub
-    install: |
-      bin.install "git-spr"
-      bin.install "git-amend"
-      bin.install "spr_reword_helper"
-    license: "MIT"
+# brews:
+#   - 
+#     name: spr
+#     repository:
+#       owner: ejoffe
+#       name: homebrew-tap
+#     homepage: https://github.com/ejoffe/spr
+#     description: Stacked Pull Requests on GitHub
+#     install: |
+#       bin.install "git-spr"
+#       bin.install "git-amend"
+#       bin.install "spr_reword_helper"
+#     license: "MIT"
 nfpms:
   - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     id: packages

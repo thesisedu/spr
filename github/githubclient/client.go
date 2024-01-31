@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -382,7 +383,7 @@ func (c *client) CreatePullRequest(ctx context.Context, gitcmd git.GitInterface,
 		Str("FromBranch", headRefName).Str("ToBranch", baseRefName).
 		Msg("CreatePullRequest")
 
-	body := formatBody(commit, info.PullRequests, c.config.Repo.ShowPrTitlesInStack)
+	body := formatBody(commit, info.PullRequests, c.config.Repo.ShowPrTitlesInStack, info)
 	if c.config.Repo.PRTemplatePath != "" {
 		pullRequestTemplate, err := readPRTemplate(gitcmd, c.config.Repo.PRTemplatePath)
 		if err != nil {
@@ -448,17 +449,25 @@ func formatStackMarkdown(commit git.Commit, stack []*github.PullRequest, showPrT
 	return buf.String()
 }
 
-func formatBody(commit git.Commit, stack []*github.PullRequest, showPrTitlesInStack bool) string {
+func formatBody(commit git.Commit, stack []*github.PullRequest, showPrTitlesInStack bool, info *github.GitHubInfo) string {
+	var connectedTo string
+	if matched, _ := regexp.MatchString(`^\d+-`, info.LocalBranch); matched {
+		connectedTo = fmt.Sprintf("Connected to #%s\n\n", info.LocalBranch[:strings.Index(info.LocalBranch, "-")])
+	} else {
+		connectedTo = ""
+	}
+
 	if len(stack) <= 1 {
 		return strings.TrimSpace(commit.Body)
 	}
 
 	if commit.Body == "" {
-		return fmt.Sprintf("**Stack**:\n%s",
+		return fmt.Sprintf("%s**Stack**:\n%s", connectedTo,
 			addManualMergeNotice(formatStackMarkdown(commit, stack, showPrTitlesInStack)))
 	}
 
-	return fmt.Sprintf("%s\n\n---\n\n**Stack**:\n%s",
+	return fmt.Sprintf("%s\n\n---\n\n%s**Stack**:\n%s",
+		connectedTo,
 		commit.Body,
 		addManualMergeNotice(formatStackMarkdown(commit, stack, showPrTitlesInStack)))
 }
@@ -531,7 +540,7 @@ func addManualMergeNotice(body string) string {
 		"Do not merge manually using the UI - doing so may have unexpected results.*"
 }
 
-func (c *client) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface, pullRequests []*github.PullRequest, pr *github.PullRequest, commit git.Commit, prevCommit *git.Commit) {
+func (c *client) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface, pullRequests []*github.PullRequest, pr *github.PullRequest, commit git.Commit, prevCommit *git.Commit, info *github.GitHubInfo) {
 
 	if c.config.User.LogGitHubCalls {
 		fmt.Printf("> github update %d : %s\n", pr.Number, pr.Title)
@@ -546,7 +555,7 @@ func (c *client) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface,
 		Str("FromBranch", pr.FromBranch).Str("ToBranch", baseRefName).
 		Interface("PR", pr).Msg("UpdatePullRequest")
 
-	body := formatBody(commit, pullRequests, c.config.Repo.ShowPrTitlesInStack)
+	body := formatBody(commit, pullRequests, c.config.Repo.ShowPrTitlesInStack, info)
 	if c.config.Repo.PRTemplatePath != "" {
 		pullRequestTemplate, err := readPRTemplate(gitcmd, c.config.Repo.PRTemplatePath)
 		if err != nil {

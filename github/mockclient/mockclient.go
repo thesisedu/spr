@@ -81,7 +81,7 @@ func (c *MockClient) CreatePullRequest(ctx context.Context, gitcmd git.GitInterf
 	}
 }
 
-func (c *MockClient) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface, pullRequests []*github.PullRequest, pr *github.PullRequest, commit git.Commit, prevCommit *git.Commit) {
+func (c *MockClient) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface, pullRequests []*github.PullRequest, pr *github.PullRequest, commit git.Commit, prevCommit *git.Commit, info *github.GitHubInfo) {
 	fmt.Printf("HUB: UpdatePullRequest\n")
 	c.verifyExpectation(expectation{
 		op:     updatePullRequestOP,
